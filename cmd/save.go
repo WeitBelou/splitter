@@ -12,31 +12,44 @@ import (
 	"github.com/weitbelou/splitter/chunks"
 )
 
-func split(cmd *cobra.Command, args []string) {
-	// Open file for reader
-	f, err := getInputFile(inputFile)
-	if err != nil {
-		log.Fatalf("failed to get input file %s: %v", inputFile, err)
-	}
-	defer f.Close()
+var saveCmd = &cobra.Command{
+	Use:   "save",
+	Short: "Save chunks to local files",
+	Run: func(cmd *cobra.Command, args []string) {
+		// Open file for reader
+		f, err := getInputFile(inputFile)
+		if err != nil {
+			log.Fatalf("failed to get input file %s: %v", inputFile, err)
+		}
+		defer f.Close()
 
-	// Create directory for chunks
-	err = os.MkdirAll(outputDir, 0700)
-	if err != nil {
-		log.Fatalf("failed to create dir for result: %v", err)
-	}
+		// Create directory for chunks
+		err = os.MkdirAll(outputDir, 0700)
+		if err != nil {
+			log.Fatalf("failed to create dir for result: %v", err)
+		}
 
-	// Create chunks reader
-	r := chunks.NewLineReader(f, chunkSize)
+		// Create chunks reader
+		r := chunks.NewLineReader(f, chunkSize)
 
-	// Create chunks processor
-	processor := newIndexedChunksWriter(outputDir, inputFile)
+		// Create chunks processor
+		processor := newIndexedChunksWriter(outputDir, inputFile)
 
-	// Process chunks
-	err = chunks.Process(r, processor)
-	if err != nil {
-		log.Fatalf("failed to process chunks: %v", err)
-	}
+		// Process chunks
+		err = chunks.Process(r, processor)
+		if err != nil {
+			log.Fatalf("failed to process chunks: %v", err)
+		}
+	},
+}
+
+var outputDir string
+
+func init() {
+	saveCmd.PersistentFlags().StringVarP(&outputDir, "output-dir", "o",
+		"out",
+		"Path where chunks will be saved (default is 'out'",
+	)
 }
 
 func getInputFile(name string) (*os.File, error) {

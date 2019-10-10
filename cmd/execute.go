@@ -9,7 +9,6 @@ import (
 
 var (
 	inputFile string
-	outputDir string
 	chunkSize uint32
 )
 
@@ -18,20 +17,17 @@ func init() {
 	rootCmd.PersistentFlags().StringVarP(&inputFile, "input-file", "i", "-",
 		"Input file (default is '-' which stands for STDIN)",
 	)
-	rootCmd.PersistentFlags().StringVarP(&outputDir, "output-dir", "o",
-		"out",
-		"Path where chunks will be saved (default is 'out'",
-	)
+
 	rootCmd.PersistentFlags().Uint32VarP(&chunkSize, "chunk-size", "s", 100,
 		"Size of chunks on which file will be split (default is '100')",
 	)
+
+	// Add commands
+	rootCmd.AddCommand(saveCmd, sendCmd)
 }
 
 var rootCmd = &cobra.Command{
-	Use:   "splitter",
-	Short: "Splitter is an example utility that splits big files to chunks of 'n' lines",
-	Long:  "Splitter is an example utility that splits big files to chunks of 'n' lines",
-	Run:   split,
+	Use: "splitter",
 }
 
 // Execute executes root command
