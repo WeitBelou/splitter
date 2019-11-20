@@ -40,10 +40,7 @@ var sendCmd = &cobra.Command{
 		}
 
 		// Process chunks
-		err = chunks.Process(r, processor)
-		if err != nil {
-			log.Fatalf("failed to process chunks: %v", err)
-		}
+		chunks.Process(r, processor)
 		if debug {
 			log.Printf("[DEBUG] Processing completed: %+v", processor)
 		}
