@@ -14,7 +14,7 @@ type Reader interface {
 	Read() (Chunk, error)
 }
 
-// LineReader is a Reader that splits reader into chunks of fixed N of lines
+// LineReader is a Reader that splits reader into chunks of no more than N lines
 type LineReader struct {
 	n   uint32
 	buf *bufio.Reader
@@ -69,7 +69,7 @@ type Processor interface {
 	ProcessChunk(chunk Chunk) error
 }
 
-// ProcessorFunc is an adapter to help use usual functions as chunk processors
+// ProcessorFunc is an adapter that helps with using functions as chunk processors
 type ProcessorFunc func(chunk Chunk) error
 
 // ProcessChunk calls underlining function with chunk
@@ -77,7 +77,7 @@ func (f ProcessorFunc) ProcessChunk(chunk Chunk) error {
 	return f(chunk)
 }
 
-// Process reads chunks from chunk reader and process it with given processor
+// Process reads chunks from chunk reader and process them with given processor
 func Process(r Reader, processor Processor) error {
 	for {
 		chunk, err := r.Read()

@@ -37,17 +37,38 @@ var sendCmd = &cobra.Command{
 	},
 }
 
-var sendURI string
+var (
+	sendURI         string
+	sendMethod      string
+	sendContentType string
+)
 
 func init() {
-	sendCmd.PersistentFlags().StringVarP(&sendURI, "uri", "u",
+	sendCmd.PersistentFlags().StringVarP(
+		&sendURI,
+		"uri", "u",
 		"http://devnull-as-a-service.com/dev/null",
-		"Where to POST chunks (default 'http://devnull-as-a-service.com/dev/null')",
+		"Where to POST chunks",
+	)
+	sendCmd.PersistentFlags().StringVarP(
+		&sendMethod,
+		"method", "m",
+		"POST",
+		"HTTP method to be used for request",
+	)
+
+	sendCmd.PersistentFlags().StringVarP(
+		&sendContentType,
+		"content-type", "c",
+		"application/json",
+		"Content type of request body",
 	)
 }
 
 type httpPostChunksWriter struct {
-	uri string
+	uri         string
+	method      string
+	contentType string
 }
 
 func newHTTPPostChunksWriter(uri string) httpPostChunksWriter {
@@ -57,9 +78,14 @@ func newHTTPPostChunksWriter(uri string) httpPostChunksWriter {
 }
 
 func (w httpPostChunksWriter) ProcessChunk(chunk chunks.Chunk) error {
-	resp, err := http.Post(w.uri, "text/html", bytes.NewReader(chunk))
+	req, err := http.NewRequest(w.method, w.uri, bytes.NewReader(chunk))
 	if err != nil {
-		return fmt.Errorf("failed to send chunk to uri %s: %w", w.uri, err)
+		return fmt.Errorf("failed to create request: %w", err)
+	}
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return fmt.Errorf("failed to perfrorm request: %w", err)
 	}
 	defer resp.Body.Close()
 
