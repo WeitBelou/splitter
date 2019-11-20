@@ -23,16 +23,29 @@ var sendCmd = &cobra.Command{
 		}
 		defer f.Close()
 
+		if debug {
+			log.Printf("[DEBUG] Using input file: %s", f.Name())
+		}
+
 		// Create chunks reader
 		r := chunks.NewLineReader(f, chunkSize)
+		if debug {
+			log.Printf("[DEBUG] Line reader created: %+v", r)
+		}
 
 		// Create chunks processor
-		processor := newHTTPPostChunksWriter(sendURI)
+		processor := newHTTPPostChunksWriter(sendURI, sendMethod, sendContentType)
+		if debug {
+			log.Printf("[DEBUG] Chunk processor created: %+v", processor)
+		}
 
 		// Process chunks
 		err = chunks.Process(r, processor)
 		if err != nil {
 			log.Fatalf("failed to process chunks: %v", err)
+		}
+		if debug {
+			log.Printf("[DEBUG] Processing completed: %+v", processor)
 		}
 	},
 }
@@ -50,6 +63,7 @@ func init() {
 		"http://devnull-as-a-service.com/dev/null",
 		"Where to POST chunks",
 	)
+
 	sendCmd.PersistentFlags().StringVarP(
 		&sendMethod,
 		"method", "m",
@@ -71,16 +85,25 @@ type httpPostChunksWriter struct {
 	contentType string
 }
 
-func newHTTPPostChunksWriter(uri string) httpPostChunksWriter {
+func newHTTPPostChunksWriter(uri string, method string, contentType string) httpPostChunksWriter {
 	return httpPostChunksWriter{
-		uri: uri,
+		uri:         uri,
+		method:      method,
+		contentType: contentType,
 	}
 }
 
 func (w httpPostChunksWriter) ProcessChunk(chunk chunks.Chunk) error {
+	if debug {
+		log.Printf("[DEBUG] Chunk: %q", chunk)
+	}
+
 	req, err := http.NewRequest(w.method, w.uri, bytes.NewReader(chunk))
 	if err != nil {
 		return fmt.Errorf("failed to create request: %w", err)
+	}
+	if debug {
+		log.Printf("[DEBUG] Request object created: %+v", req)
 	}
 
 	resp, err := http.DefaultClient.Do(req)
@@ -88,6 +111,9 @@ func (w httpPostChunksWriter) ProcessChunk(chunk chunks.Chunk) error {
 		return fmt.Errorf("failed to perfrorm request: %w", err)
 	}
 	defer resp.Body.Close()
+	if debug {
+		log.Printf("[DEBUG] Response from server: %+v", resp)
+	}
 
 	if resp.StatusCode != http.StatusOK {
 		body, err := ioutil.ReadAll(resp.Body)
@@ -96,6 +122,9 @@ func (w httpPostChunksWriter) ProcessChunk(chunk chunks.Chunk) error {
 		}
 
 		return fmt.Errorf("service responded with status code: %d, body: %s", resp.StatusCode, body)
+	}
+	if debug {
+		log.Print("[DEBUG] Chunk processing completed")
 	}
 
 	return nil

@@ -10,6 +10,7 @@ import (
 var (
 	inputFile string
 	chunkSize uint32
+	debug     bool
 )
 
 func init() {
@@ -28,6 +29,13 @@ func init() {
 		"Size of chunks on which file will be split",
 	)
 
+	rootCmd.PersistentFlags().BoolVarP(
+		&debug,
+		"debug", "d",
+		false,
+		"Enable debug mode",
+	)
+
 	// Add commands
 	rootCmd.AddCommand(sendCmd)
 }
@@ -42,11 +50,4 @@ func Execute() {
 		log.Printf("failed to execute root command: %v", err)
 		os.Exit(1)
 	}
-}
-
-func getInputFile(name string) (*os.File, error) {
-	if name == "-" {
-		return os.Stdin, nil
-	}
-	return os.Open(name)
 }
