@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"fmt"
 	"io"
-	"log"
 )
 
 // Chunk is a slice of bytes for processing
@@ -79,27 +78,24 @@ func (f ProcessorFunc) ProcessChunk(chunk Chunk) error {
 }
 
 // Process reads chunks from chunk reader and process them with given processor
-func Process(r Reader, processor Processor) {
-	chunks := make(chan Chunk, 8)
-	// Send chunks to channel
-	go func() {
-		for {
-			chunk, err := r.Read()
-			// Last chunk
-			if err == io.EOF {
-				chunks <- chunk
-				close(chunks)
-			}
+func Process(r Reader, processor Processor) error {
+	for {
+		chunk, err := r.Read()
+		// Last chunk
+		if err == io.EOF {
+			err = processor.ProcessChunk(chunk)
 			if err != nil {
-				log.Printf("[ERROR] Failed to read chunk: %v", err)
+				return fmt.Errorf("failed to process chunk %s: %w", chunk, err)
 			}
+			return nil
 		}
-	}()
-
-	for chunk := range chunks {
-		err := processor.ProcessChunk(chunk)
 		if err != nil {
-			log.Printf("[ERROR] Failed to process chunk: %v", err)
+			return fmt.Errorf("failed to read chunk: %w", err)
+		}
+
+		err = processor.ProcessChunk(chunk)
+		if err != nil {
+			return fmt.Errorf("failed to process chunk %s: %w", chunk, err)
 		}
 	}
 }
