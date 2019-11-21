@@ -1,9 +1,9 @@
 package cmd
 
 import (
-	"log"
 	"os"
 
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
@@ -11,6 +11,7 @@ var (
 	inputFile string
 	chunkSize uint32
 	debug     bool
+	log       = logrus.New()
 )
 
 func init() {
@@ -42,6 +43,11 @@ func init() {
 
 var rootCmd = &cobra.Command{
 	Use: "splitter",
+	PersistentPreRun: func(cmd *cobra.Command, args []string) {
+		if debug {
+			log.SetLevel(logrus.DebugLevel)
+		}
+	},
 }
 
 // Execute executes root command
