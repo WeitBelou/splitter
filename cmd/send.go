@@ -64,7 +64,7 @@ func runSend(_ *cobra.Command, _ []string) {
 	log.Debugf("Chunk processor created: %+v", processor)
 
 	// Process chunks
-	err = chunks.Process(r, processor)
+	err = chunks.Process(r, processor, timeout, concurrency)
 	if err != nil {
 		log.Errorf("Failed to process chunks: %v", err)
 	}

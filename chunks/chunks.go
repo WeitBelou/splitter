@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"time"
 )
 
 // Chunk is a slice of bytes for processing
@@ -12,7 +13,7 @@ type Chunk []byte
 
 // Reader is an interface for reading chunks
 type Reader interface {
-	Read() (Chunk, error)
+	Read(ctx context.Context) (Chunk, error)
 }
 
 // LineReader is a Reader that splits reader into chunks of no more than N lines
@@ -32,7 +33,7 @@ func NewLineReader(r io.Reader, linesInChunk uint32) LineReader {
 }
 
 // Read reads chunks from underlining reader
-func (r LineReader) Read() (Chunk, error) {
+func (r LineReader) Read(ctx context.Context) (Chunk, error) {
 	chunk := make(Chunk, 0)
 
 	for i := uint32(0); i < r.n; i++ {
@@ -79,11 +80,11 @@ func (f ProcessorFunc) ProcessChunk(ctx context.Context, chunk Chunk) error {
 }
 
 // Process reads chunks from chunk reader and process them with given processor
-func Process(r Reader, processor Processor) error {
+func Process(r Reader, processor Processor, chunkTimeout time.Duration, concurrency uint32) error {
 	for {
 		ctx := context.Background()
 
-		chunk, err := r.Read()
+		chunk, err := r.Read(ctx)
 		// Last chunk
 		if err == io.EOF {
 			err = processor.ProcessChunk(ctx, chunk)

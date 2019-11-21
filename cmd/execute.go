@@ -10,10 +10,11 @@ import (
 
 var (
 	// Cmdline arguments
-	inputFile string
-	chunkSize uint32
-	debug     bool
-	timeout   time.Duration
+	inputFile   string
+	chunkSize   uint32
+	debug       bool
+	timeout     time.Duration
+	concurrency uint32
 
 	// Logger instance
 	log = logrus.New()
@@ -47,6 +48,13 @@ func init() {
 		"timeout", "t",
 		15*time.Second,
 		"Timeout for single chunk processing",
+	)
+
+	rootCmd.PersistentFlags().Uint32VarP(
+		&concurrency,
+		"concurrency", "c",
+		5,
+		"Maximum number of concurrent processors",
 	)
 
 	// Add commands
