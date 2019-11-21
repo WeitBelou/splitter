@@ -81,6 +81,7 @@ func (f ProcessorFunc) ProcessChunk(chunk Chunk) error {
 // Process reads chunks from chunk reader and process them with given processor
 func Process(r Reader, processor Processor) {
 	chunks := make(chan Chunk, 8)
+
 	// Send chunks to channel
 	go func() {
 		for {
@@ -89,6 +90,7 @@ func Process(r Reader, processor Processor) {
 			if err == io.EOF {
 				chunks <- chunk
 				close(chunks)
+				return
 			}
 			if err != nil {
 				log.Printf("[ERROR] Failed to read chunk: %v", err)
@@ -97,9 +99,13 @@ func Process(r Reader, processor Processor) {
 	}()
 
 	for chunk := range chunks {
-		err := processor.ProcessChunk(chunk)
-		if err != nil {
-			log.Printf("[ERROR] Failed to process chunk: %v", err)
-		}
+		go func(chunk Chunk) {
+			err := processor.ProcessChunk(chunk)
+			if err != nil {
+				log.Printf("[ERROR] Failed to process chunk: %v", err)
+			}
+		}(chunk)
 	}
+
+	<-chunks
 }
