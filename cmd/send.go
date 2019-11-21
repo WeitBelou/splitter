@@ -55,7 +55,12 @@ func runSend(_ *cobra.Command, _ []string) {
 	log.Debugf("Line reader created: %+v", r)
 
 	// Create chunks processor
-	processor := chunks.NewHTTPWriter(log, sendURI, sendMethod, sendContentType)
+	processor := chunks.HTTPSender{
+		Log:         log,
+		URI:         sendURI,
+		Method:      sendMethod,
+		ContentType: sendContentType,
+	}
 	log.Debugf("Chunk processor created: %+v", processor)
 
 	// Process chunks

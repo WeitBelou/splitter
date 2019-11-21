@@ -2,6 +2,7 @@ package chunks
 
 import (
 	"bufio"
+	"context"
 	"fmt"
 	"io"
 )
@@ -66,24 +67,26 @@ func appendLine(chunk Chunk, line []byte) Chunk {
 
 // Processor processes chunks
 type Processor interface {
-	ProcessChunk(chunk Chunk) error
+	ProcessChunk(ctx context.Context, chunk Chunk) error
 }
 
 // ProcessorFunc is an adapter that helps with using functions as chunk processors
-type ProcessorFunc func(chunk Chunk) error
+type ProcessorFunc func(ctx context.Context, chunk Chunk) error
 
 // ProcessChunk calls underlining function with chunk
-func (f ProcessorFunc) ProcessChunk(chunk Chunk) error {
-	return f(chunk)
+func (f ProcessorFunc) ProcessChunk(ctx context.Context, chunk Chunk) error {
+	return f(ctx, chunk)
 }
 
 // Process reads chunks from chunk reader and process them with given processor
 func Process(r Reader, processor Processor) error {
 	for {
+		ctx := context.Background()
+
 		chunk, err := r.Read()
 		// Last chunk
 		if err == io.EOF {
-			err = processor.ProcessChunk(chunk)
+			err = processor.ProcessChunk(ctx, chunk)
 			if err != nil {
 				return fmt.Errorf("failed to process chunk %s: %w", chunk, err)
 			}
@@ -93,7 +96,7 @@ func Process(r Reader, processor Processor) error {
 			return fmt.Errorf("failed to read chunk: %w", err)
 		}
 
-		err = processor.ProcessChunk(chunk)
+		err = processor.ProcessChunk(ctx, chunk)
 		if err != nil {
 			return fmt.Errorf("failed to process chunk %s: %w", chunk, err)
 		}

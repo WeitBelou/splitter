@@ -2,16 +2,21 @@ package cmd
 
 import (
 	"os"
+	"time"
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
 var (
+	// Cmdline arguments
 	inputFile string
 	chunkSize uint32
 	debug     bool
-	log       = logrus.New()
+	timeout   time.Duration
+
+	// Logger instance
+	log = logrus.New()
 )
 
 func init() {
@@ -35,6 +40,13 @@ func init() {
 		"debug", "d",
 		false,
 		"Enable debug mode",
+	)
+
+	rootCmd.PersistentFlags().DurationVarP(
+		&timeout,
+		"timeout", "t",
+		15*time.Second,
+		"Timeout for single chunk processing",
 	)
 
 	// Add commands
