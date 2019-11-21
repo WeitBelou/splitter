@@ -10,6 +10,20 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+// Processor processes chunks
+type Processor interface {
+	ProcessChunk(ctx context.Context, chunk Chunk) error
+}
+
+// ProcessorFunc is an adapter that helps with using functions as chunk processors
+type ProcessorFunc func(ctx context.Context, chunk Chunk) error
+
+// ProcessChunk calls underlining function with chunk
+func (f ProcessorFunc) ProcessChunk(ctx context.Context, chunk Chunk) error {
+	return f(ctx, chunk)
+}
+
+// HTTPSender is a processor that sends chunks via HTTP
 type HTTPSender struct {
 	// Logger instance
 	Log *logrus.Logger
@@ -20,6 +34,7 @@ type HTTPSender struct {
 	ContentType string
 }
 
+// ProcessChunk implements ProcessChunk method of Processor interface
 func (s HTTPSender) ProcessChunk(ctx context.Context, chunk Chunk) error {
 	s.Log.Debugf("Chunk: %q", chunk)
 	req, err := s.newRequest(ctx, chunk)
@@ -33,7 +48,7 @@ func (s HTTPSender) ProcessChunk(ctx context.Context, chunk Chunk) error {
 		return fmt.Errorf("failed to perfrorm request: %w", err)
 	}
 	defer resp.Body.Close()
-	s.Log.Debugf("Response from server: %+v", resp)
+	s.Log.Debugf("Response from the server: %+v", resp)
 
 	if resp.StatusCode >= http.StatusBadRequest {
 		body, err := ioutil.ReadAll(resp.Body)

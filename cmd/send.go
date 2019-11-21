@@ -30,7 +30,7 @@ func init() {
 		&sendMethod,
 		"method", "m",
 		"POST",
-		"HTTP method to be used for request",
+		"HTTP request method to be used",
 	)
 
 	sendCmd.PersistentFlags().StringVarP(
@@ -63,8 +63,14 @@ func runSend(_ *cobra.Command, _ []string) {
 	}
 	log.Debugf("Chunk processor created: %+v", processor)
 
-	// Process chunks
-	err = chunks.Process(r, processor, timeout, concurrency)
+	// Create dispatcher
+	dispatcher := chunks.ConcurrentDispatcher{
+		Log:            log,
+		ReadTimeout:    timeout / 2,
+		ProcessTimeout: timeout / 2,
+		Concurrency:    concurrency,
+	}
+	err = dispatcher.Dispatch(r, processor)
 	if err != nil {
 		log.Errorf("Failed to process chunks: %v", err)
 	}

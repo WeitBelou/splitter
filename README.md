@@ -1,8 +1,8 @@
 # Splitter
 
-Simple tool to send process chunks of data.
+A simple tool to send process chunks of data.
 
 ## Usage
-```bash
+```shell script
 go run main.go help
 ```

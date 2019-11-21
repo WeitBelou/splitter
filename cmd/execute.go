@@ -14,7 +14,7 @@ var (
 	chunkSize   uint32
 	debug       bool
 	timeout     time.Duration
-	concurrency uint32
+	concurrency int
 
 	// Logger instance
 	log = logrus.New()
@@ -46,11 +46,11 @@ func init() {
 	rootCmd.PersistentFlags().DurationVarP(
 		&timeout,
 		"timeout", "t",
-		15*time.Second,
+		30*time.Second,
 		"Timeout for single chunk processing",
 	)
 
-	rootCmd.PersistentFlags().Uint32VarP(
+	rootCmd.PersistentFlags().IntVarP(
 		&concurrency,
 		"concurrency", "c",
 		5,
