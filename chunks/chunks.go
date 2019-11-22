@@ -40,44 +40,32 @@ func (d ConcurrentDispatcher) Dispatch(r Reader, processor Processor) error {
 	ctx := context.Background()
 
 	// Read chunks to channel
-	for {
-		chunk, err := readWithTimeout(ctx, r, d.ReadTimeout)
-		if err == io.EOF {
+	go func(chunks chan<- Chunk) {
+		for {
+			chunk, err := readWithTimeout(ctx, r, d.ReadTimeout)
+			if err == io.EOF {
+				chunks <- chunk
+				close(chunks)
+				break
+			}
+			if err != nil {
+				d.Log.Errorf("Failed to read chunk: %v", err)
+				continue
+			}
 			chunks <- chunk
-			close(chunks)
-			break
 		}
-		if err != nil {
-			d.Log.Errorf("Failed to read chunk: %v", err)
-			continue
-		}
-		chunks <- chunk
-	}
+	}(chunks)
 
 	// Process chunks from channel
 	for chunk := range chunks {
-		err := processWithTimeout(ctx, processor, chunk, d.ProcessTimeout)
-		if err != nil {
-			d.Log.Errorf("Failed to process chunk: %v", err)
-			continue
-		}
+		go func(chunk Chunk) {
+			err := processWithTimeout(ctx, processor, chunk, d.ProcessTimeout)
+			if err != nil {
+				d.Log.Errorf("Failed to process chunk: %v", err)
+				return
+			}
+		}(chunk)
 	}
 
 	return nil
-}
-
-func readWithTimeout(ctx context.Context, r Reader, timeout time.Duration) (Chunk, error) {
-	ctx, cancel := context.WithTimeout(ctx, timeout)
-	defer cancel()
-
-	select {
-	case <-ctx.Done():
-		return nil, ctx.Err()
-	case res := <-r.ReadToChannel(ctx):
-		return res.Chunk, res.Err
-	}
-}
-
-func processWithTimeout(ctx context.Context, processor Processor, chunk Chunk, timeout time.Duration) error {
-	panic("not implemented")
 }

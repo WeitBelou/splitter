@@ -52,7 +52,7 @@ func init() {
 
 	rootCmd.PersistentFlags().IntVarP(
 		&concurrency,
-		"concurrency", "c",
+		"concurrency", "n",
 		5,
 		"Maximum number of concurrent processors",
 	)
