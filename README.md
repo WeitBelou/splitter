@@ -1,6 +1,6 @@
 # Splitter
 
-A simple tool to send process chunks of data.
+A simple tool to send chunks of data to http endpoints.
 
 ## Usage
 ```shell script
